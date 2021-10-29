@@ -1,42 +1,63 @@
-# rust 嵌入式
+# rust riscv esp32
 
-硬件: esp32c3
+Hardware: esp32 c3
+System: Windows 10 pro
 
-## 环境搭建
+## environment
 
 参考: https://esp-rs.github.io/book/
 
-1. 安装 rust
+1. install rust
 
     请参考: https://rustup.rs/
 
-2. 安装 nightly toolchain
+2. use nightly toolchain
 
     rustup toolchain install nightly
     rustup default nightly
 
-3. 创建项目
+3. create project
 
     cargo new rust-esp32c3-example
 
-    安装 linker:
-        cargo install ldproxy
+4. create file .cargo/config:
 
-    在项目中添加文件 .cargo/config, 指定编译目标, 及其它参数:
+```
+[build]
+target = "riscv32imc-esp-espidf"
 
-        [build]
-        target = "riscv32imc-esp-espidf"
+[unstable]
+build-std = ["std", "panic_abort"]
+build-std-features = ["panic_immediate_abort"]
 
-        [target.riscv32imc-esp-espidf]
-        linker = "ldproxy"
+[env]
+ESP_IDF_GLOBAL_INSTALL = { value = "1" }
+```
 
-        [unstable]
-        build-std = ["std", "panic_abort"]
-        build-std-features = ["panic_immediate_abort"]
-        patch-in-config = true
+5. add dependence
 
+    cargo add esp-idf-sys --features "native binstart std"
 
-4. 编译
-   
-   cargo install ldproxy
+6. main.rs
 
+```rust
+use esp_idf_sys;
+
+fn main() {
+    // Temporary. Will disappear once ESP-IDF 4.4 is released, but for now it is necessary to call this function once,
+    // or else some patches to the runtime implemented by esp-idf-sys might not link properly.
+    esp_idf_sys::link_patches();
+
+    println!("Hello, world!");
+}
+```
+
+7. build
+
+   cargo build
+
+8. flash
+
+    cargo install espflash
+
+    espflash /dev/ttyUSB0 target/riscv32imc-esp-espidf/debug/rust-esp32-std-mini
